@@ -107,6 +107,30 @@ func main () {
                 os.Exit(0)
             }
 
+        // Key flags
+        case "-k":
+            // Ensure valid args were provided
+            if len(os.Args) < 5 {
+                fmt.Println("Invalid arguments: use '-h' to get help.")
+                os.Exit(1)
+            }
+
+            // Ensure new keyword is used
+            if os.Args[2] != "new" {
+                fmt.Println("Invalid argument '"+ os.Args[2] + "': use '-h' to get help.")
+                os.Exit(1)
+            } 
+
+            // Define name and path
+            var fileName string
+            var dirPath string
+
+            fileName = os.Args[3]
+            dirPath = os.Args[4]
+
+            // Create new key file
+            internal.CreateNewKeyFile(fileName, dirPath)
+
         // Help flag
         case "-h":
             fmt.Println("This is the help menu.")

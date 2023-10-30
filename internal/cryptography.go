@@ -146,3 +146,10 @@ func DecryptFile (input string, output string, key []byte) error {
 
 	return nil
 }
+
+// fileName: name of the key file 
+//
+// filePath: directory path of the new key file
+func CreateNewKeyFile (fileNam, filePath string) {
+
+}
