@@ -26,17 +26,27 @@ func main () {
         // Encrypt flag
         case "-e": 
             // Ensure valid usage
-            if len(os.Args) < 3 {
-                fmt.Println("Usage: program <flag> <path>")
+            if len(os.Args) < 4 {
+                fmt.Println("Invalid usage: use '-h' to get help.")
                 os.Exit(1)
             }
 
             // Define paths
+            var keyPath string
             var inputPath string
             var outputPath string
+
+            // Get key path from args
+            path, err := internal.GetAbsPath(os.Args[2])
+            if err != nil {
+                fmt.Println("Fatal error: ", err.Error())
+                os.Exit(1)
+            }
+
+            keyPath = path
             
             // Get input path from args
-            path, err := internal.GetAbsPath(os.Args[2])
+            path, err = internal.GetAbsPath(os.Args[3])
             if err != nil {
                 fmt.Println("Fatal error: ", err.Error())
                 os.Exit(1)
@@ -45,8 +55,8 @@ func main () {
             inputPath = path
 
             // Get output path if provided
-            if len(os.Args) > 3 {
-                path, err := internal.GetAbsPath(os.Args[3])
+            if len(os.Args) > 4 {
+                path, err := internal.GetAbsPath(os.Args[4])
                 if err != nil {
                     fmt.Println("Fatal error: ", err.Error())
                     os.Exit(1)
@@ -57,7 +67,7 @@ func main () {
             }
 
             // Encrypt file
-            if err := internal.EncryptFile(inputPath, outputPath, []byte(key)); err != nil {
+            if err := internal.EncryptFile(inputPath, outputPath, keyPath); err != nil {
                 fmt.Println("Fatal error: ", err.Error())
                 os.Exit(1)
             } else {
@@ -68,17 +78,27 @@ func main () {
         // Decrypt flag
         case "-d":
             // Ensure valid usage
-            if len(os.Args) < 3 {
-                fmt.Println("Usage: program <flag> <path>")
+            if len(os.Args) < 4 {
+                fmt.Println("Invalid usage: use '-h' to get help.")
                 os.Exit(1)
             }
 
             // Define paths
+            var keyPath string
             var inputPath string
             var outputPath string
+
+            // Get key path from args
+            path, err := internal.GetAbsPath(os.Args[2])
+            if err != nil {
+                fmt.Println("Fatal error: ", err.Error())
+                os.Exit(1)
+            }
+
+            keyPath = path
             
             // Get input path from args
-            path, err := internal.GetAbsPath(os.Args[2])
+            path, err = internal.GetAbsPath(os.Args[3])
             if err != nil {
                 fmt.Println("Fatal error: ", err.Error())
                 os.Exit(1)
@@ -87,8 +107,8 @@ func main () {
             inputPath = path
 
             // Get output path if provided
-            if len(os.Args) > 3 {
-                path, err := internal.GetAbsPath(os.Args[3])
+            if len(os.Args) > 4 {
+                path, err := internal.GetAbsPath(os.Args[4])
                 if err != nil {
                     fmt.Println("Fatal error: ", err.Error())
                     os.Exit(1)
@@ -99,7 +119,7 @@ func main () {
             }
 
             // Decrypt file
-            if err := internal.DecryptFile(inputPath, outputPath, []byte(key)); err != nil {
+            if err := internal.DecryptFile(inputPath, outputPath, keyPath); err != nil {
                 fmt.Println("Fatal error: ", err.Error())
                 os.Exit(1)
             } else {
@@ -110,30 +130,27 @@ func main () {
         // Key flags
         case "-k":
             // Ensure valid args were provided
-            if len(os.Args) < 5 {
+            if len(os.Args) < 4 {
                 fmt.Println("Invalid arguments: use '-h' to get help.")
                 os.Exit(1)
             }
-
-            // Ensure new keyword is used
-            if os.Args[2] != "new" {
-                fmt.Println("Invalid argument '"+ os.Args[2] + "': use '-h' to get help.")
-                os.Exit(1)
-            } 
 
             // Define name and path
             var fileName string
             var dirPath string
 
-            fileName = os.Args[3]
-            dirPath = os.Args[4]
+            fileName = os.Args[2]
+            dirPath = os.Args[3]
 
             // Create new key file
-            internal.CreateNewKeyFile(fileName, dirPath)
+            if err := internal.CreateNewKeyFile(fileName, dirPath); err != nil {
+                fmt.Println("Fatal error: ", err.Error())
+                os.Exit(1)
+            }
 
         // Help flag
         case "-h":
-            fmt.Println("This is the help menu.")
+            fmt.Println("Encrypting a file:\ncryptify -e <key_path> <input_path> <?output_path>\n\nDecrypting a file:\ncryptify -d <key_path> <input_path> <?output_path>\n\nCreating a new encryption/decryption key file:\ncryptify -k <name> <location>")
             os.Exit(0)
 
         // Invalid usage

@@ -4,17 +4,19 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 // input: relative or absolute path of input file
 //
 // output: relative or absolute path of output file
 //
-// key: 32 byte encryption key
-func EncryptFile (input string, output string, key []byte) error {
+// keyPath: relative or absolute path to the key file
+func EncryptFile (input, output, keyPath string) error {
 	// Define input path
 	var inputPath string
 
@@ -41,6 +43,31 @@ func EncryptFile (input string, output string, key []byte) error {
 		outputPath = absPath
 	}
 
+	// Define key file path
+	var keyFilePath string
+
+	if IsAbsPath(keyPath) {
+		keyFilePath = keyPath
+	} else {
+		absPath, err := GetAbsPath(keyPath)
+		if err != nil {
+			return err
+		}
+		keyFilePath = absPath
+	}
+
+	// Read key from key file
+	keyData, err := os.ReadFile(keyFilePath)
+	if err != nil {
+		return err
+	}
+
+	// Decode key data
+	decodedKey, err := hex.DecodeString(string(keyData))
+	if err != nil {
+		return err
+	}
+
 	// Convert input file to byte array
 	data, err := os.ReadFile(inputPath)
 	if err != nil {
@@ -48,7 +75,7 @@ func EncryptFile (input string, output string, key []byte) error {
 	}
 
 	// Create a new cipher block
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
 		return err
 	}
@@ -82,8 +109,8 @@ func EncryptFile (input string, output string, key []byte) error {
 //
 // output: relative or absolute path of output file
 //
-// key: 32 byte encryption key
-func DecryptFile (input string, output string, key []byte) error {
+// keyPath: relative or absolute path to the key file
+func DecryptFile (input, output, keyPath string) error {
 	// Define input path
 	var inputPath string
 
@@ -110,6 +137,31 @@ func DecryptFile (input string, output string, key []byte) error {
 		outputPath = absPath
 	}
 
+	// Define key file path
+	var keyFilePath string
+
+	if IsAbsPath(keyPath) {
+		keyFilePath = keyPath
+	} else {
+		absPath, err := GetAbsPath(keyPath)
+		if err != nil {
+			return err
+		}
+		keyFilePath = absPath
+	}
+
+	// Read key from key file
+	keyData, err := os.ReadFile(keyFilePath)
+	if err != nil {
+		return err
+	}
+
+	// Decode key data
+	decodedKey, err := hex.DecodeString(string(keyData))
+	if err != nil {
+		return err
+	}
+
 	// Create encrypted data and create data array
 	ciphertext, err := os.ReadFile(inputPath)
 	if err != nil {
@@ -117,7 +169,7 @@ func DecryptFile (input string, output string, key []byte) error {
 	}
 
 	// Create new cipher block
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
 		return err
 	}
@@ -150,6 +202,48 @@ func DecryptFile (input string, output string, key []byte) error {
 // fileName: name of the key file 
 //
 // filePath: directory path of the new key file
-func CreateNewKeyFile (fileNam, filePath string) {
+func CreateNewKeyFile (fileName, filePath string) error {
+	// Define key path 
+	var keyPath string
 
+	// Get absolute path
+	if IsAbsPath(filePath) {
+		keyPath = filePath
+	} else {
+		absPath, err := GetAbsPath(filePath)
+		if err != nil {
+			return err
+		}
+		keyPath = absPath
+	}
+
+	// Define file name
+	fileName = fileName + ".bin"
+
+	// Add file name to key path
+	keyPath = filepath.Join(keyPath, fileName)
+
+	// Generate key 
+	keyBytes := make([]byte, 32)
+	if _, err := rand.Read(keyBytes); err != nil {
+		return err
+	}
+
+	// Encode key 
+	encodedKey := hex.EncodeToString(keyBytes) 
+
+	// Create key file 
+	file, err := os.Create(keyPath)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	// Write to key file 
+	if _, err := file.WriteString(encodedKey); err != nil {
+		return err
+	}
+
+	return nil
 }
