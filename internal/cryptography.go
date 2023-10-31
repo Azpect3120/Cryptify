@@ -4,7 +4,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
 	"errors"
 	"io"
 	"os"
@@ -16,7 +19,7 @@ import (
 // output: relative or absolute path of output file
 //
 // keyPath: relative or absolute path to the key file
-func EncryptFile (input, output, keyPath string) error {
+func EncryptFile(input, output, keyPath string) error {
 	// Define input path
 	var inputPath string
 
@@ -81,7 +84,7 @@ func EncryptFile (input, output, keyPath string) error {
 	}
 
 	// Create byte array for encrypt file
-	cipherText := make([]byte, aes.BlockSize + len(data))
+	cipherText := make([]byte, aes.BlockSize+len(data))
 
 	// Create initialization vector
 	iv := cipherText[:aes.BlockSize]
@@ -110,7 +113,7 @@ func EncryptFile (input, output, keyPath string) error {
 // output: relative or absolute path of output file
 //
 // keyPath: relative or absolute path to the key file
-func DecryptFile (input, output, keyPath string) error {
+func DecryptFile(input, output, keyPath string) error {
 	// Define input path
 	var inputPath string
 
@@ -199,11 +202,11 @@ func DecryptFile (input, output, keyPath string) error {
 	return nil
 }
 
-// fileName: name of the key file 
+// fileName: name of the key file
 //
 // filePath: directory path of the new key file
-func CreateNewKeyFile (fileName, filePath string) error {
-	// Define key path 
+func CreateNewKeyFile(fileName, filePath string) error {
+	// Define key path
 	var keyPath string
 
 	// Get absolute path
@@ -223,16 +226,16 @@ func CreateNewKeyFile (fileName, filePath string) error {
 	// Add file name to key path
 	keyPath = filepath.Join(keyPath, fileName)
 
-	// Generate key 
+	// Generate key
 	keyBytes := make([]byte, 32)
 	if _, err := rand.Read(keyBytes); err != nil {
 		return err
 	}
 
-	// Encode key 
-	encodedKey := hex.EncodeToString(keyBytes) 
+	// Encode key
+	encodedKey := hex.EncodeToString(keyBytes)
 
-	// Create key file 
+	// Create key file
 	file, err := os.Create(keyPath)
 	if err != nil {
 		return err
@@ -240,10 +243,54 @@ func CreateNewKeyFile (fileName, filePath string) error {
 
 	defer file.Close()
 
-	// Write to key file 
+	// Write to key file
 	if _, err := file.WriteString(encodedKey); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// Generate new blank public/private key pairs
+func GenerateRSAKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 256)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	publicKey := &privateKey.PublicKey
+	return privateKey, publicKey, nil
+}
+
+func SavePrivateKeyToFile (privateKey *rsa.PrivateKey, filename string) error {
+	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	pemBlock := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: keyBytes}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	err = pem.Encode(file, pemBlock)
+	return err
+}
+
+func SavePublicKeyToFile (publicKey *rsa.PublicKey, filename string) error {
+	keyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		return err
+	}
+	pemBlock := &pem.Block{Type: "RSA KEY", Bytes: keyBytes}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	err = pem.Encode(file, pemBlock)
+	return err
 }
