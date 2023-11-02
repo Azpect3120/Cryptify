@@ -8,17 +8,31 @@ import (
 )
 
 func main() {
-	priv, pub, err := internal.GenerateRSAKeys()
+	
+	// priv, pub, err := internal.GenerateRSAKeys()
+
+	// internal.SavePublicKeyToFile(pub, "public2.pem")
+	// internal.SavePrivateKeyToFile(priv, "private2.pem")
+	
+	// Load keys
+	publicKey, err := internal.LoadPublicKey("public.pem")
+	if err != nil {
+		fmt.Println("Fatal error: ", err)
+		os.Exit(1)
+	}
+	privateKey, err := internal.LoadPrivateKey("private2.pem")
+	if err != nil {
+		fmt.Println("Fatal error: ", err)
+		os.Exit(1)
+	}
+	
+	aesKey, err := internal.DeriveAESKeyFromRSAKey(privateKey)
 	if err != nil {
 		fmt.Println("Fatal error: ", err)
 		os.Exit(1)
 	}
 
-    fmt.Printf("%v\n\n", priv)
-    fmt.Printf("%v\n\n", pub)
-
-	internal.SavePrivateKeyToFile(priv, "private.pem")
-	internal.SavePublicKeyToFile(pub, "public.pem")
+	fmt.Printf("%v\n\n%v\n\n%v\n\n", publicKey, privateKey, aesKey)
 
 	// Ensure valid usage
 	if len(os.Args) < 2 {

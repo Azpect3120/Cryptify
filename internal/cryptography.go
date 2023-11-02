@@ -4,10 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/hex"
-	"encoding/pem"
 	"errors"
 	"io"
 	"os"
@@ -251,46 +248,3 @@ func CreateNewKeyFile(fileName, filePath string) error {
 	return nil
 }
 
-// Generate new blank public/private key pairs
-func GenerateRSAKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 256)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	publicKey := &privateKey.PublicKey
-	return privateKey, publicKey, nil
-}
-
-func SavePrivateKeyToFile (privateKey *rsa.PrivateKey, filename string) error {
-	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	pemBlock := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: keyBytes}
-
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	err = pem.Encode(file, pemBlock)
-	return err
-}
-
-func SavePublicKeyToFile (publicKey *rsa.PublicKey, filename string) error {
-	keyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		return err
-	}
-	pemBlock := &pem.Block{Type: "RSA KEY", Bytes: keyBytes}
-
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	err = pem.Encode(file, pemBlock)
-	return err
-}
